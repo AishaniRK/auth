@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lumina — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--tr:0.4s cubic-bezier(0.16,1,0.3,1);--sb:260px;}
+[data-theme="dark"]{
+  --bg:#0a0a0f;--surface:#13131a;--surface2:#1c1c28;--surface3:#222233;
+  --border:rgba(255,255,255,0.07);--bfocus:rgba(139,92,246,0.55);
+  --text:#f0f0f8;--muted:#6b6b80;--sub:#9898b0;
+  --accent:#8b5cf6;--accent2:#a78bfa;--glow:rgba(139,92,246,0.22);
+  --err:#f87171;--ok:#34d399;--warn:#fbbf24;
+  --panel:#13131a;--inp:rgba(255,255,255,0.04);
+  --glass:rgba(19,19,26,0.65);--gb:rgba(255,255,255,0.08);--gs:rgba(255,255,255,0.04);
+  --orb1:rgba(139,92,246,0.13);--orb2:rgba(79,70,229,0.08);
+  --sbg:#0d0d14;--sbd:rgba(255,255,255,0.06);
+}
+[data-theme="light"]{
+  --bg:#f0eeff;--surface:#fff;--surface2:#f8f7ff;--surface3:#f0eeff;
+  --border:rgba(0,0,0,0.07);--bfocus:rgba(109,40,217,0.45);
+  --text:#1a1a2e;--muted:#9090a8;--sub:#606078;
+  --accent:#7c3aed;--accent2:#6d28d9;--glow:rgba(124,58,237,0.18);
+  --err:#ef4444;--ok:#10b981;--warn:#f59e0b;
+  --panel:#fff;--inp:rgba(0,0,0,0.03);
+  --glass:rgba(255,255,255,0.6);--gb:rgba(255,255,255,0.85);--gs:rgba(255,255,255,0.6);
+  --orb1:rgba(139,92,246,0.09);--orb2:rgba(79,70,229,0.06);
+  --sbg:#ffffff;--sbd:rgba(0,0,0,0.07);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background var(--tr),color var(--tr);overflow:hidden;}
+
+/* ── orbs ── */
+.orbs{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+.orb{position:absolute;border-radius:50%;filter:blur(90px);animation:drift 14s ease-in-out infinite alternate;}
+.o1{width:600px;height:600px;top:-250px;left:80px;background:var(--orb1);}
+.o2{width:450px;height:450px;bottom:-200px;right:-80px;background:var(--orb2);animation-delay:-6s;}
+.o3{width:300px;height:300px;top:40%;left:50%;background:rgba(139,92,246,0.04);animation-delay:-3s;}
+@keyframes drift{from{transform:translate(0,0) scale(1);}to{transform:translate(30px,20px) scale(1.06);}}
+
+/* ── layout ── */
+.app{display:flex;height:100vh;position:relative;z-index:1;}
+
+/* ─────────────────── SIDEBAR ─────────────────── */
+.sidebar{
+  width:var(--sb);flex-shrink:0;
+  background:var(--sbg);
+  border-right:1px solid var(--sbd);
+  display:flex;flex-direction:column;
+  height:100vh;overflow:hidden;
+  position:fixed;top:0;left:0;bottom:0;z-index:300;
+  transform:translateX(-100%);
+  transition:transform var(--tr),background var(--tr);
+}
+.sidebar.open{transform:translateX(0);}
+
+/* sidebar header / logo */
+.sb-logo{display:flex;align-items:center;gap:10px;padding:22px 20px 18px;border-bottom:1px solid var(--border);}
+.sb-lm{width:32px;height:32px;border-radius:9px;flex-shrink:0;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 3px 12px var(--glow);}
+.sb-ln{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:var(--text);}
+
+/* profile card */
+.sb-profile{padding:20px;border-bottom:1px solid var(--border);}
+.sb-av-wrap{position:relative;width:64px;height:64px;margin:0 auto 12px;}
+.sb-av{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:#fff;overflow:hidden;flex-shrink:0;border:2px solid rgba(139,92,246,.3);box-shadow:0 4px 20px var(--glow);}
+.sb-av img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+.sb-online{position:absolute;bottom:2px;right:2px;width:12px;height:12px;border-radius:50%;background:var(--ok);border:2px solid var(--sbg);}
+.sb-name{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;color:var(--text);text-align:center;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sb-email{font-size:11px;color:var(--muted);text-align:center;margin-bottom:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sb-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.sb-stat{background:var(--inp);border:1px solid var(--border);border-radius:10px;padding:10px 8px;text-align:center;transition:border-color .2s;}
+.sb-stat:hover{border-color:rgba(139,92,246,.25);}
+.sb-stat-n{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--accent2);line-height:1;}
+.sb-stat-l{font-size:10px;color:var(--muted);margin-top:3px;letter-spacing:.03em;}
+
+/* sidebar join date */
+.sb-meta{padding:12px 20px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:7px;}
+.sb-row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);}
+.sb-row-icon{width:20px;flex-shrink:0;display:flex;justify-content:center;font-size:13px;}
+
+/* sidebar nav */
+.sb-nav{flex:1;overflow-y:auto;padding:12px 10px;display:flex;flex-direction:column;gap:2px;}
+.sb-nav::-webkit-scrollbar{width:4px;}
+.sb-nav::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px;}
+.sn{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;cursor:pointer;color:var(--muted);font-size:13px;font-family:'Syne',sans-serif;font-weight:600;letter-spacing:.02em;transition:all .2s;border:1px solid transparent;background:none;width:100%;text-align:left;}
+.sn:hover{color:var(--text);background:var(--inp);}
+.sn.active{color:var(--accent2);background:rgba(139,92,246,.1);border-color:rgba(139,92,246,.2);}
+.sn-ico{width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+.sn-badge{margin-left:auto;background:var(--accent);color:#fff;font-size:10px;font-weight:700;border-radius:99px;padding:2px 7px;font-family:'Syne',sans-serif;}
+
+/* sidebar footer */
+.sb-foot{padding:14px 10px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:2px;}
+.sb-foot-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:11px;cursor:pointer;color:var(--muted);font-size:12px;font-family:'Syne',sans-serif;font-weight:600;transition:all .2s;border:none;background:none;width:100%;text-align:left;}
+.sb-foot-row:hover{color:var(--text);background:var(--inp);}
+.sb-foot-row.danger:hover{color:var(--err);background:rgba(248,113,113,.08);}
+
+/* ─────────────────── MAIN ─────────────────── */
+.main{flex:1;width:100%;display:flex;flex-direction:column;overflow:hidden;}
+
+/* topbar */
+.topbar{height:56px;flex-shrink:0;background:var(--sbg);border-bottom:1px solid var(--sbd);display:flex;align-items:center;padding:0 24px;gap:16px;transition:background var(--tr);}
+.topbar-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:var(--text);flex:1;}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.thm{width:48px;height:26px;background:var(--surface2);border:1px solid var(--border);border-radius:100px;cursor:pointer;display:flex;align-items:center;padding:3px;transition:all var(--tr);}
+.thm:hover{border-color:var(--accent);}
+.thm-k{width:20px;height:20px;border-radius:50%;background:var(--accent);transition:transform var(--tr);display:flex;align-items:center;justify-content:center;font-size:10px;box-shadow:0 2px 6px var(--glow);}
+[data-theme="light"] .thm-k{transform:translateX(22px);}
+.topbar-btn{width:34px;height:34px;border-radius:10px;background:var(--inp);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--muted);transition:all .2s;}
+.topbar-btn:hover{border-color:var(--accent);color:var(--accent2);}
+
+/* content scroll area */
+.content{flex:1;overflow-y:auto;padding:24px;scroll-behavior:smooth;}
+.content::-webkit-scrollbar{width:5px;}
+.content::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px;}
+
+/* ── glass card ── */
+.gc{background:var(--glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--gb);border-radius:18px;position:relative;overflow:hidden;transition:all var(--tr);}
+.gc::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:var(--gs);}
+.gc:hover{box-shadow:0 16px 50px rgba(0,0,0,.15),0 0 0 1px var(--glow);}
+
+/* ── section label ── */
+.slbl{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.slbl::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* ── page header ── */
+.ph{margin-bottom:22px;}
+.ph-greet{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:var(--text);line-height:1.15;margin-bottom:4px;}
+.ph-greet span{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.ph-sub{font-size:13px;color:var(--muted);}
+
+/* ── stats ── */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;}
+.sc{padding:20px 18px;}
+.sc-ico{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:14px;}
+.i-p{background:rgba(139,92,246,.15);}.i-k{background:rgba(236,72,153,.15);}.i-t{background:rgba(20,184,166,.15);}.i-a{background:rgba(251,191,36,.15);}
+.sc-val{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--text);line-height:1;margin-bottom:3px;}
+.sc-lbl{font-size:12px;color:var(--muted);margin-bottom:10px;}
+.sc-sub{font-family:'Syne',sans-serif;font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;letter-spacing:.03em;display:inline-block;}
+.neu{color:var(--muted);background:var(--inp);}.pos{color:var(--ok);background:rgba(52,211,153,.1);}
+
+/* ── timeline ── */
+.tstrip{display:flex;gap:5px;align-items:flex-end;height:56px;margin-top:4px;}
+.tbw{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;}
+.tbar{width:100%;border-radius:5px 5px 2px 2px;min-height:4px;transition:opacity .2s;}
+.tbw:hover .tbar{opacity:.65!important;}
+.tday{font-family:'Syne',sans-serif;font-size:9px;font-weight:700;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;}
+
+/* ── main grid ── */
+.mgrid{display:grid;grid-template-columns:1fr 300px;gap:16px;margin-bottom:22px;}
+
+/* ── quick actions ── */
+.qa-list{display:flex;flex-direction:column;gap:8px;}
+.qa{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--border);border-radius:13px;background:var(--inp);cursor:pointer;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;transition:all .22s;text-align:left;width:100%;position:relative;overflow:hidden;}
+.qa::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,var(--glow),transparent);opacity:0;transition:opacity .22s;}
+.qa:hover{border-color:var(--accent);transform:translateX(3px);box-shadow:0 4px 16px var(--glow);}
+.qa:hover::before{opacity:1;}
+.qa-ico{width:34px;height:34px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:15px;}
+.qa-ico.p{background:rgba(139,92,246,.15);}.qa-ico.k{background:rgba(236,72,153,.15);}.qa-ico.t{background:rgba(20,184,166,.15);}
+.qa-txt{flex:1;}.qa-txt strong{display:block;font-size:13px;font-weight:600;}.qa-txt span{font-size:11px;color:var(--muted);}
+.qa-arr{color:var(--muted);font-size:13px;transition:transform .18s,color .18s;}.qa:hover .qa-arr{transform:translateX(3px);color:var(--accent2);}
+
+/* ── emotion bars ── */
+.ebars{display:flex;flex-direction:column;gap:10px;}
+.erow{display:flex;align-items:center;gap:9px;}
+.eemo{font-size:15px;width:20px;text-align:center;flex-shrink:0;}
+.ename{font-family:'Syne',sans-serif;font-size:11px;font-weight:600;width:60px;flex-shrink:0;color:var(--sub);}
+.etrack{flex:1;height:7px;border-radius:99px;background:var(--border);overflow:hidden;}
+.efill{height:100%;border-radius:99px;transition:width 1s cubic-bezier(.16,1,.3,1);width:0;}
+.efill.joy{background:linear-gradient(90deg,#fbbf24,#f59e0b);}
+.efill.calm{background:linear-gradient(90deg,#34d399,#10b981);}
+.efill.anxious{background:linear-gradient(90deg,#f87171,#ef4444);}
+.efill.love{background:linear-gradient(90deg,#f472b6,#ec4899);}
+.efill.sad{background:linear-gradient(90deg,#60a5fa,#3b82f6);}
+.efill.angry{background:linear-gradient(90deg,#fb923c,#ea580c);}
+.epct{font-family:'Syne',sans-serif;font-size:11px;font-weight:600;color:var(--muted);width:28px;text-align:right;}
+
+/* ── people list ── */
+.plist{display:flex;flex-direction:column;gap:8px;}
+.prow{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:var(--inp);cursor:pointer;transition:all .2s;position:relative;}
+.prow:hover{border-color:rgba(139,92,246,.25);background:rgba(139,92,246,.05);}
+.pav{width:34px;height:34px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#fff;}
+.pinfo{flex:1;min-width:0;}
+.pname{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pmeta{font-size:10px;color:var(--muted);}
+.pemo{font-size:16px;flex-shrink:0;}
+.p-acts{display:flex;gap:3px;flex-shrink:0;opacity:0;transition:opacity .15s;}
+.prow:hover .p-acts{opacity:1;}
+.rbtn{width:26px;height:26px;border-radius:7px;border:1px solid var(--border);background:var(--inp);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;transition:all .15s;color:var(--muted);}
+.rbtn.ed:hover{border-color:var(--accent);color:var(--accent2);background:var(--glow);}
+.rbtn.dl:hover{border-color:var(--err);color:var(--err);background:rgba(248,113,113,.1);}
+
+/* ── activity ── */
+.alist{display:flex;flex-direction:column;}
+.ait{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
+.ait:last-child{border-bottom:none;padding-bottom:0;}
+.adot{width:9px;height:9px;border-radius:50%;flex-shrink:0;margin-top:4px;border:2px solid var(--panel);}
+.dp{background:var(--accent);}.dk{background:#ec4899;}.dt{background:#14b8a6;}.da{background:#f59e0b;}
+.abdy{flex:1;min-width:0;}
+.atx{font-size:13px;line-height:1.4;}
+.atx strong{font-weight:600;}
+.atm{font-size:11px;color:var(--muted);margin-top:2px;font-family:'Syne',sans-serif;letter-spacing:.03em;}
+.aemo{font-size:14px;flex-shrink:0;}
+
+/* ── empty ── */
+.empty{text-align:center;padding:24px 16px;}
+.ei{font-size:30px;opacity:.35;margin-bottom:8px;}
+.et{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--muted);margin-bottom:4px;}
+.es{font-size:11px;color:var(--muted);line-height:1.5;}
+
+/* ── modal overlay ── */
+.mo{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.55);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .28s;padding:16px;}
+.mo.on{opacity:1;pointer-events:all;}
+.modal{background:var(--panel);border:1px solid var(--border);border-radius:22px;padding:30px;width:100%;max-width:420px;box-shadow:0 30px 80px rgba(0,0,0,.4);transform:scale(.94) translateY(10px);transition:transform .32s cubic-bezier(.16,1,.3,1);position:relative;max-height:90vh;overflow-y:auto;}
+.mo.on .modal{transform:scale(1) translateY(0);}
+.m-title{font-family:'Syne',sans-serif;font-size:19px;font-weight:800;color:var(--text);margin-bottom:5px;}
+.m-sub{font-size:13px;color:var(--muted);margin-bottom:22px;}
+.mclose{position:absolute;top:16px;right:16px;width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:var(--inp);cursor:pointer;color:var(--muted);font-size:15px;display:flex;align-items:center;justify-content:center;transition:all .18s;}
+.mclose:hover{border-color:var(--accent);color:var(--text);}
+.fg{margin-bottom:14px;}
+.fl{display:block;font-size:11px;font-weight:600;color:var(--sub);margin-bottom:6px;letter-spacing:.06em;text-transform:uppercase;font-family:'Syne',sans-serif;}
+.fi{width:100%;padding:11px 13px;background:var(--inp);border:1px solid var(--border);border-radius:11px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);outline:none;transition:all .2s;-webkit-appearance:none;}
+.fi:focus{border-color:var(--bfocus);box-shadow:0 0 0 3px var(--glow);}
+.fi::placeholder{color:var(--muted);}
+select.fi option{background:var(--panel);}
+.cpick{display:flex;flex-wrap:wrap;gap:7px;}
+.chip{padding:6px 12px;border-radius:99px;border:1px solid var(--border);background:var(--inp);cursor:pointer;font-size:12px;transition:all .18s;color:var(--text);}
+.chip:hover{border-color:var(--accent);background:var(--glow);}
+.chip.sel{border-color:var(--accent);background:var(--glow);color:var(--accent2);font-weight:600;}
+.msub{width:100%;padding:13px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:12px;color:#fff;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.04em;margin-top:18px;transition:all .22s;}
+.msub:hover{transform:translateY(-2px);box-shadow:0 8px 26px var(--glow);}
+.msub:disabled{opacity:.4;cursor:not-allowed;transform:none!important;box-shadow:none!important;}
+
+/* person detail */
+.pd-hdr{display:flex;align-items:center;gap:12px;margin-bottom:18px;padding-bottom:18px;border-bottom:1px solid var(--border);}
+.pd-av{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:17px;font-weight:700;color:#fff;flex-shrink:0;}
+.pd-name{font-family:'Syne',sans-serif;font-size:17px;font-weight:800;color:var(--text);}
+.pd-rel{font-size:12px;color:var(--muted);}
+.intlist{display:flex;flex-direction:column;gap:7px;max-height:300px;overflow-y:auto;}
+.iit{padding:11px 13px;border-radius:11px;border:1px solid var(--border);background:var(--inp);display:flex;align-items:flex-start;gap:9px;}
+.iit-body{flex:1;min-width:0;}
+.iit-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;}
+.iit-emo{font-size:12px;font-weight:600;color:var(--text);}
+.iit-time{font-family:'Syne',sans-serif;font-size:10px;color:var(--muted);}
+.iit-note{font-size:11px;color:var(--muted);font-style:italic;}
+.iit-acts{display:flex;gap:3px;flex-shrink:0;}
+
+/* history */
+.hit{display:flex;align-items:flex-start;gap:10px;padding:11px 0;border-bottom:1px solid var(--border);}
+.hit:last-child{border-bottom:none;}
+.hemp{font-size:13px;color:var(--muted);text-align:center;padding:24px 0;}
+
+/* confirm */
+.cov{position:fixed;inset:0;z-index:900;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .22s;padding:16px;}
+.cov.on{opacity:1;pointer-events:all;}
+.cbox{background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:26px;max-width:340px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.4);transform:scale(.94);transition:transform .28s cubic-bezier(.16,1,.3,1);text-align:center;}
+.cov.on .cbox{transform:scale(1);}
+.c-ico{font-size:34px;margin-bottom:10px;}
+.c-ttl{font-family:'Syne',sans-serif;font-size:17px;font-weight:800;color:var(--text);margin-bottom:7px;}
+.c-sub{font-size:12px;color:var(--muted);margin-bottom:22px;line-height:1.5;}
+.c-btns{display:flex;gap:9px;}
+.c-cancel{flex:1;padding:11px;border:1px solid var(--border);border-radius:11px;background:var(--inp);color:var(--text);font-family:'Syne',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .18s;}
+.c-cancel:hover{border-color:var(--accent);}
+.c-ok{flex:1;padding:11px;border:none;border-radius:11px;background:var(--err);color:#fff;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .18s;outline:none;}
+.c-ok:hover{opacity:.85;}
+
+/* toast */
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(120px);background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:11px 18px;font-size:13px;color:var(--text);box-shadow:0 8px 36px rgba(0,0,0,.3);transition:transform .38s cubic-bezier(.16,1,.3,1);z-index:999;font-family:'Syne',sans-serif;backdrop-filter:blur(14px);white-space:nowrap;}
+.toast.on{transform:translateX(-50%) translateY(0);}
+
+/* mobile toggle */
+.menu-btn{display:flex;width:34px;height:34px;border-radius:10px;background:var(--inp);border:1px solid var(--border);cursor:pointer;align-items:center;justify-content:center;font-size:16px;color:var(--text);}
+.sb-overlay{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.45);cursor:pointer;}
+.sb-overlay.on{display:block;}
+
+/* ── responsive ── */
+@media(max-width:1100px){.stats{grid-template-columns:repeat(2,1fr);}.mgrid{grid-template-columns:1fr;}}
+@media(max-width:780px){
+  :root{--sb:280px;}
+  .content{padding:16px;}
+}
+</style>
+</head>
+<body>
+<div class="orbs"><div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div></div>
+<div class="sb-overlay" id="sbOverlay" onclick="closeSidebar()"></div>
+
+<div class="app">
+
+  <!-- ═══════════════ SIDEBAR ═══════════════ -->
+  <aside class="sidebar" id="sidebar">
+
+    
+
+    <!-- Profile card -->
+    <div class="sb-profile">
+      <div class="sb-av-wrap">
+        <div class="sb-av" id="sbAvatar">?</div>
+        <div class="sb-online"></div>
+      </div>
+      <div class="sb-name" id="sbName">Loading…</div>
+      <div class="sb-email" id="sbEmail">—</div>
+      <div class="sb-stats">
+        <div class="sb-stat"><div class="sb-stat-n" id="sbPplN">0</div><div class="sb-stat-l">People</div></div>
+        <div class="sb-stat"><div class="sb-stat-n" id="sbIntN">0</div><div class="sb-stat-l">Logs</div></div>
+      </div>
+    </div>
+
+    <!-- Meta info -->
+    <div class="sb-meta">
+      <div class="sb-row"><span class="sb-row-icon">📅</span><span id="sbJoined">—</span></div>
+      <div class="sb-row"><span class="sb-row-icon">🔥</span><span id="sbStreak">0 day streak</span></div>
+      <div class="sb-row"><span class="sb-row-icon">✨</span><span id="sbTopEmo">No data yet</span></div>
+    </div>
+
+    <!-- Nav -->
+    <nav class="sb-nav">
+      <button class="sn active" onclick="setView('home',this)"><span class="sn-ico">🏠</span>Home</button>
+      <button class="sn" onclick="setView('people',this)"><span class="sn-ico">👥</span>People</button>
+      <button class="sn" onclick="setView('history',this)"><span class="sn-ico">📖</span>History</button>
+      <button class="sn" onclick="setView('stats',this)"><span class="sn-ico">📊</span>Stats</button>
+    </nav>
+
+    <!-- Footer -->
+    <div class="sb-foot">
+      <button class="sb-foot-row" onclick="openM('person')"><span style="font-size:15px">👤</span> Add Person</button>
+      <button class="sb-foot-row" onclick="openM('interaction')"><span style="font-size:15px">💬</span> Log Interaction</button>
+      <button class="sb-foot-row danger" onclick="doLogout()"><span style="font-size:15px">🚪</span> Sign Out</button>
+    </div>
+
+  </aside>
+
+  <!-- ═══════════════ MAIN ═══════════════ -->
+  <div class="main">
+
+    <!-- Topbar -->
+    <div class="topbar">
+      <button class="menu-btn" id="menuBtn" onclick="toggleSidebar()">☰</button>
+      <div class="topbar-title" id="topbarTitle">Dashboard</div>
+      <div class="topbar-right">
+        <button class="topbar-btn" onclick="openM('interaction')" title="Log interaction">✏️</button>
+        <button class="topbar-btn" onclick="openM('person')" title="Add person">➕</button>
+        <button class="thm" onclick="toggleTheme()"><div class="thm-k"><span id="tIcon">🌙</span></div></button>
+        <button class="topbar-btn" onclick="doLogout()" title="Sign out" style="color:var(--err);border-color:rgba(248,113,113,.3);">🚪</button>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content" id="content">
+      <!-- injected by setView() -->
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══ MODALS ═══ -->
+
+<!-- Add / Edit Person -->
+<div class="mo" id="mPerson">
+  <div class="modal">
+    <button class="mclose" onclick="closeM('mPerson')">✕</button>
+    <div class="m-title" id="mPTitle">Add Person</div>
+    <div class="m-sub" id="mPSub">Start tracking someone new</div>
+    <div class="fg"><label class="fl">Full Name *</label><input class="fi" id="pName" placeholder="e.g. Jamie Rivera" oninput="valP()"></div>
+    <div class="fg"><label class="fl">Relationship *</label><input class="fi" id="pRel" placeholder="e.g. Close friend, Partner" oninput="valP()"></div>
+    <div class="fg">
+      <label class="fl">Initial Emotion</label>
+      <div class="cpick" id="pEpick">
+        <div class="chip" data-v="Joy" onclick="selC(this,'pEpick')">😊 Joy</div>
+        <div class="chip" data-v="Calm" onclick="selC(this,'pEpick')">😌 Calm</div>
+        <div class="chip" data-v="Love" onclick="selC(this,'pEpick')">❤️ Love</div>
+        <div class="chip" data-v="Sad" onclick="selC(this,'pEpick')">😔 Sad</div>
+        <div class="chip" data-v="Angry" onclick="selC(this,'pEpick')">😤 Angry</div>
+        <div class="chip" data-v="Anxious" onclick="selC(this,'pEpick')">😰 Anxious</div>
+      </div>
+    </div>
+    <button class="msub" id="btnP" onclick="saveP()" disabled>Save Person</button>
+  </div>
+</div>
+
+<!-- Add / Edit Interaction -->
+<div class="mo" id="mInter">
+  <div class="modal">
+    <button class="mclose" onclick="closeM('mInter')">✕</button>
+    <div class="m-title" id="mITitle">Log Interaction</div>
+    <div class="m-sub" id="mISub">Record a moment with someone</div>
+    <div class="fg"><label class="fl">Person *</label><select class="fi" id="iPerson" onchange="valI()"><option value="">— Select —</option></select></div>
+    <div class="fg"><label class="fl">What happened? *</label><input class="fi" id="iNote" placeholder="Brief description…" oninput="valI()"></div>
+    <div class="fg">
+      <label class="fl">Emotion *</label>
+      <div class="cpick" id="iEpick">
+        <div class="chip" data-v="Joy" onclick="selC(this,'iEpick');valI()">😊 Joy</div>
+        <div class="chip" data-v="Calm" onclick="selC(this,'iEpick');valI()">😌 Calm</div>
+        <div class="chip" data-v="Love" onclick="selC(this,'iEpick');valI()">❤️ Love</div>
+        <div class="chip" data-v="Sad" onclick="selC(this,'iEpick');valI()">😔 Sad</div>
+        <div class="chip" data-v="Angry" onclick="selC(this,'iEpick');valI()">😤 Angry</div>
+        <div class="chip" data-v="Anxious" onclick="selC(this,'iEpick');valI()">😰 Anxious</div>
+      </div>
+    </div>
+    <button class="msub" id="btnI" onclick="saveI()" disabled>Log Interaction</button>
+  </div>
+</div>
+
+<!-- History modal -->
+<div class="mo" id="mHistory">
+  <div class="modal">
+    <button class="mclose" onclick="closeM('mHistory')">✕</button>
+    <div class="m-title">Emotion History</div>
+    <div class="m-sub">All interactions — ✏️ edit &nbsp;·&nbsp; ✕ delete</div>
+    <div id="hlist" style="max-height:420px;overflow-y:auto;"></div>
+  </div>
+</div>
+
+<!-- Person detail -->
+<div class="mo" id="mDetail">
+  <div class="modal">
+    <button class="mclose" onclick="closeM('mDetail')">✕</button>
+    <div id="detailBody"></div>
+  </div>
+</div>
+
+<!-- Confirm -->
+<div class="cov" id="covEl">
+  <div class="cbox">
+    <div class="c-ico" id="cIco">⚠️</div>
+    <div class="c-ttl" id="cTtl">Are you sure?</div>
+    <div class="c-sub" id="cSb">This cannot be undone.</div>
+    <div class="c-btns">
+      <button class="c-cancel" onclick="closeConfirm()">Cancel</button>
+      <button class="c-ok" id="cOk" onclick="doConfirm()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toastEl"></div>
+
+<script>
+// ══════════════════════════════════════════════
+// STORAGE + AUTH GUARD
+// ══════════════════════════════════════════════
+const $=id=>document.getElementById(id);
+const lsG=k=>{try{return JSON.parse(localStorage.getItem(k))??null}catch{return null}};
+const lsS=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+
+// ── AUTH GUARD ─────────────────────────────
+var ME = null;
+(function(){
+  var sessRaw = localStorage.getItem('lm_session');
+  var usersRaw = localStorage.getItem('lm_users');
+  if(!sessRaw){ window.location.href='auth.html'; return; }
+  var sess, users;
+  try{ sess = JSON.parse(sessRaw); }catch(e){ localStorage.removeItem('lm_session'); window.location.href='auth.html'; return; }
+  try{ users = JSON.parse(usersRaw) || []; }catch(e){ users = []; }
+  if(!sess || !sess.uid){ localStorage.removeItem('lm_session'); window.location.href='auth.html'; return; }
+  for(var i=0;i<users.length;i++){
+    if(users[i].uid === sess.uid){ ME = users[i]; break; }
+  }
+  if(!ME){ localStorage.removeItem('lm_session'); window.location.href='auth.html'; }
+}());
+if(!ME) throw new Error('auth');
+
+// user-scoped keys
+var KP='lm_p_'+ME.uid;
+var KI='lm_i_'+ME.uid;
+var people   = lsG(KP)||[];
+var iactions = lsG(KI)||[];
+
+// edit state
+var editPId=null, editIId=null;
+
+// ══════════════════════════════════════════════
+// THEME
+// ══════════════════════════════════════════════
+const t0=localStorage.getItem('lm_theme')||'dark';
+document.documentElement.setAttribute('data-theme',t0);
+$('tIcon').textContent=t0==='dark'?'🌙':'☀️';
+function toggleTheme(){
+  const n=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',n);
+  localStorage.setItem('lm_theme',n);
+  $('tIcon').textContent=n==='dark'?'🌙':'☀️';
+}
+
+// ══════════════════════════════════════════════
+// SIDEBAR — populate user data
+// ══════════════════════════════════════════════
+function initSidebar(){
+  // avatar
+  const av=$('sbAvatar');
+  if(ME.avatar){
+    av.innerHTML=`<img src="${ME.avatar}" alt="avatar">`;
+  } else {
+    av.textContent=initials(ME.name);
+    av.style.background=gradFor(ME.uid);
+  }
+  $('sbName').textContent=ME.name;
+  $('sbEmail').textContent=ME.email;
+  // joined
+  const d=new Date(ME.joinedAt);
+  $('sbJoined').textContent=`Joined ${d.toLocaleDateString('en-US',{month:'long',year:'numeric'})}`;
+  updateSidebarCounts();
+}
+
+function updateSidebarCounts(){
+  $('sbPplN').textContent=people.length;
+  $('sbIntN').textContent=iactions.length;
+  // streak
+  const s=calcStreak();
+  $('sbStreak').textContent=s===0?'No streak yet':`${s} day streak 🔥`;
+  // top emotion
+  if(!iactions.length){$('sbTopEmo').textContent='No data yet';}
+  else{
+    const cnt={};iactions.forEach(i=>{cnt[i.emotion]=(cnt[i.emotion]||0)+1;});
+    const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0];
+    const m=EMO[top[0]]||{e:'💭'};
+    $('sbTopEmo').textContent=`${m.e} ${top[0]} (top emotion)`;
+  }
+}
+
+// ══════════════════════════════════════════════
+// MOBILE SIDEBAR
+// ══════════════════════════════════════════════
+function toggleSidebar(){
+  $('sidebar').classList.toggle('open');
+  $('sbOverlay').classList.toggle('on');
+}
+function closeSidebar(){
+  $('sidebar').classList.remove('open');
+  $('sbOverlay').classList.remove('on');
+}
+
+// ══════════════════════════════════════════════
+// VIEWS
+// ══════════════════════════════════════════════
+let currentView='home';
+function setView(v,btn){
+  currentView=v;
+  document.querySelectorAll('.sn').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  const titles={home:'Dashboard',people:'People',history:'History',stats:'Stats'};
+  $('topbarTitle').textContent=titles[v]||'Dashboard';
+  closeSidebar();
+  renderView();
+}
+
+function renderView(){
+  const c=$('content');
+  if(currentView==='home')    renderHome(c);
+  else if(currentView==='people')  renderPeoplePage(c);
+  else if(currentView==='history') renderHistoryPage(c);
+  else if(currentView==='stats')   renderStatsPage(c);
+}
+
+// ══════════════════════════════════════════════
+// EMOTION META
+// ══════════════════════════════════════════════
+const EMO={
+  Joy:{e:'😊',cls:'joy',d:'dp'},Calm:{e:'😌',cls:'calm',d:'dt'},
+  Love:{e:'❤️',cls:'love',d:'dk'},Sad:{e:'😔',cls:'sad',d:'da'},
+  Angry:{e:'😤',cls:'angry',d:'dp'},Anxious:{e:'😰',cls:'anxious',d:'dk'}
+};
+const ECOL={Joy:'#fbbf24',Calm:'#34d399',Love:'#f472b6',Sad:'#60a5fa',Angry:'#fb923c',Anxious:'#f87171'};
+const AVC=['linear-gradient(135deg,#8b5cf6,#ec4899)','linear-gradient(135deg,#ec4899,#f97316)','linear-gradient(135deg,#14b8a6,#3b82f6)','linear-gradient(135deg,#f59e0b,#ef4444)','linear-gradient(135deg,#6366f1,#8b5cf6)','linear-gradient(135deg,#10b981,#3b82f6)'];
+const gradFor=uid=>AVC[uid.charCodeAt(uid.length-1)%AVC.length];
+const avc=i=>AVC[i%AVC.length];
+const initials=n=>n.split(' ').map(w=>w[0]?.toUpperCase()||'').slice(0,2).join('');
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function relTime(ts){const d=Date.now()-ts,m=Math.floor(d/60000);if(m<1)return'Just now';if(m<60)return`${m}m ago`;const h=Math.floor(m/60);if(h<24)return`${h}h ago`;const dd=Math.floor(h/24);if(dd===1)return'Yesterday';if(dd<7)return`${dd}d ago`;return new Date(ts).toLocaleDateString();}
+const pName=id=>(people.find(x=>x.id===id)||{name:'Unknown'}).name;
+function calcStreak(){if(!iactions.length)return 0;const days=new Set(iactions.map(i=>new Date(i.ts).toDateString()));let s=0;const d=new Date();while(days.has(d.toDateString())){s++;d.setDate(d.getDate()-1);}return s;}
+
+// ══════════════════════════════════════════════
+// HOME VIEW
+// ══════════════════════════════════════════════
+function renderHome(c){
+  const now=new Date();
+  const hr=now.getHours();
+  const greet=hr<12?'Good morning':'Good afternoon';
+  const pc=people.length, ic=iactions.length;
+  const s=calcStreak();
+  let topEmoHtml='—', topSubHtml='Log to see';
+  if(ic){
+    const cnt={};iactions.forEach(i=>{cnt[i.emotion]=(cnt[i.emotion]||0)+1;});
+    const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0];
+    const m=EMO[top[0]]||{e:'💭'};
+    topEmoHtml=`${m.e} ${top[0]}`;
+    topSubHtml=`${Math.round(top[1]/ic*100)}% of logs`;
+  }
+
+  c.innerHTML=`
+    <div class="ph">
+      <div class="ph-greet">${greet}, <span>${esc(ME.firstName||ME.name.split(' ')[0])}.</span></div>
+      <div class="ph-sub">${now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}</div>
+    </div>
+
+    <div class="stats">
+      <div class="gc sc"><div class="sc-ico i-p">👥</div><div class="sc-val">${pc}</div><div class="sc-lbl">People Tracked</div><div class="sc-sub ${pc?'pos':'neu'}">${pc?pc+' in your circle':'No one yet'}</div></div>
+      <div class="gc sc"><div class="sc-ico i-k">💬</div><div class="sc-val">${ic}</div><div class="sc-lbl">Interactions</div><div class="sc-sub ${ic?'pos':'neu'}">${ic?ic+' logged':'None yet'}</div></div>
+      <div class="gc sc"><div class="sc-ico i-t">✨</div><div class="sc-val" style="font-size:18px;padding-top:5px;">${topEmoHtml}</div><div class="sc-lbl">Top Emotion</div><div class="sc-sub neu">${topSubHtml}</div></div>
+      <div class="gc sc"><div class="sc-ico i-a">🔥</div><div class="sc-val">${s}</div><div class="sc-lbl">Day Streak</div><div class="sc-sub ${s?'pos':'neu'}">${s?s+' days strong':'Start logging!'}</div></div>
+    </div>
+
+    <div class="gc" style="padding:20px 22px;margin-bottom:20px;">
+      <div class="slbl">Weekly Mood Pulse</div>
+      <div class="tstrip" id="tstrip"></div>
+    </div>
+
+    <div class="mgrid">
+      <div>
+        <div class="gc" style="padding:22px;margin-bottom:16px;">
+          <div class="slbl">Emotion Distribution</div>
+          <div class="ebars" id="ebars"></div>
+        </div>
+        <div class="gc" style="padding:22px;">
+          <div class="slbl">Recent Activity</div>
+          <div class="alist" id="alist"></div>
+        </div>
+      </div>
+      <div>
+        <div class="gc" style="padding:22px;margin-bottom:16px;">
+          <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:5px;">Quick Actions</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:16px;">What would you like to do?</div>
+          <div class="qa-list">
+            <button class="qa" onclick="openM('person')"><div class="qa-ico p">👤</div><div class="qa-txt"><strong>Add Person</strong><span>Track someone new</span></div><span class="qa-arr">→</span></button>
+            <button class="qa" onclick="openM('interaction')"><div class="qa-ico k">💬</div><div class="qa-txt"><strong>Log Interaction</strong><span>Record a moment</span></div><span class="qa-arr">→</span></button>
+            <button class="qa" onclick="openM('history')"><div class="qa-ico t">📖</div><div class="qa-txt"><strong>Full History</strong><span>Browse all entries</span></div><span class="qa-arr">→</span></button>
+          </div>
+        </div>
+        <div class="gc" style="padding:22px;">
+          <div class="slbl">People</div>
+          <div class="plist" id="plistHome"></div>
+        </div>
+      </div>
+    </div>`;
+
+  renderTimeline();
+  renderEbars();
+  renderActivity();
+  renderPeopleList('plistHome',4);
+}
+
+// ══════════════════════════════════════════════
+// PEOPLE VIEW
+// ══════════════════════════════════════════════
+function renderPeoplePage(c){
+  c.innerHTML=`
+    <div class="ph"><div class="ph-greet">Your <span>Circle.</span></div><div class="ph-sub">Everyone you're tracking</div></div>
+    <div style="display:flex;gap:10px;margin-bottom:18px;">
+      <button class="qa" style="max-width:200px;" onclick="openM('person')"><div class="qa-ico p">👤</div><div class="qa-txt"><strong>Add Person</strong></div><span class="qa-arr">→</span></button>
+    </div>
+    <div class="gc" style="padding:22px;">
+      <div class="slbl">All People (${people.length})</div>
+      <div class="plist" id="plistFull"></div>
+    </div>`;
+  renderPeopleList('plistFull', Infinity);
+}
+
+// ══════════════════════════════════════════════
+// HISTORY VIEW
+// ══════════════════════════════════════════════
+function renderHistoryPage(c){
+  c.innerHTML=`
+    <div class="ph"><div class="ph-greet">Emotion <span>Timeline.</span></div><div class="ph-sub">Every interaction you've logged</div></div>
+    <div class="gc" style="padding:22px;">
+      <div class="slbl">All Interactions (${iactions.length})</div>
+      <div id="histFull"></div>
+    </div>`;
+  renderFullHistory('histFull');
+}
+
+// ══════════════════════════════════════════════
+// STATS VIEW
+// ══════════════════════════════════════════════
+function renderStatsPage(c){
+  const ic=iactions.length;
+  let byEmo={}, byPerson={}, byDay={};
+  iactions.forEach(i=>{
+    byEmo[i.emotion]=(byEmo[i.emotion]||0)+1;
+    byPerson[i.personId]=(byPerson[i.personId]||0)+1;
+    const day=new Date(i.ts).toLocaleDateString('en-US',{weekday:'short'});
+    byDay[day]=(byDay[day]||0)+1;
+  });
+
+  c.innerHTML=`
+    <div class="ph"><div class="ph-greet">Your <span>Stats.</span></div><div class="ph-sub">Deep insights into your emotional patterns</div></div>
+    <div class="gc" style="padding:22px;margin-bottom:16px;">
+      <div class="slbl">Emotion Distribution</div>
+      <div class="ebars" id="statsEbars"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+      <div class="gc" style="padding:22px;">
+        <div class="slbl">Most Active People</div>
+        <div id="statsPeople" style="display:flex;flex-direction:column;gap:9px;"></div>
+      </div>
+      <div class="gc" style="padding:22px;">
+        <div class="slbl">Activity by Day</div>
+        <div id="statsDay" style="display:flex;flex-direction:column;gap:9px;"></div>
+      </div>
+    </div>
+    <div class="gc" style="padding:22px;">
+      <div class="slbl">Weekly Mood Pulse</div>
+      <div class="tstrip" id="tstrip"></div>
+    </div>`;
+
+  renderEbars('statsEbars');
+  renderTimeline();
+
+  // top people
+  const sp=document.getElementById('statsPeople');
+  if(!ic){sp.innerHTML='<div class="empty"><div class="ei">👥</div><div class="et">No data yet</div></div>';return;}
+  Object.entries(byPerson).sort((a,b)=>b[1]-a[1]).slice(0,5).forEach(([pid,count])=>{
+    const p=people.find(x=>x.id===pid); if(!p)return;
+    const pct=Math.round(count/ic*100);
+    const r=document.createElement('div');r.className='erow';
+    r.innerHTML=`<div class="pav" style="background:${p.color||avc(0)};width:28px;height:28px;font-size:11px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;color:#fff;">${initials(p.name)}</div><span class="ename" style="width:80px;">${esc(p.name)}</span><div class="etrack"><div class="efill joy" data-pct="${pct}" style="background:var(--accent);"></div></div><span class="epct">${count}</span>`;
+    sp.appendChild(r);
+  });
+  setTimeout(()=>document.querySelectorAll('#statsPeople .efill').forEach(b=>b.style.width=b.dataset.pct+'%'),80);
+
+  // by day
+  const sd=document.getElementById('statsDay');
+  const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const max=Math.max(...Object.values(byDay),1);
+  days.forEach(day=>{
+    const count=byDay[day]||0;
+    const pct=Math.round(count/max*100);
+    const r=document.createElement('div');r.className='erow';
+    r.innerHTML=`<span class="ename" style="width:30px;">${day}</span><div class="etrack"><div class="efill calm" data-pct="${pct}"></div></div><span class="epct">${count}</span>`;
+    sd.appendChild(r);
+  });
+  setTimeout(()=>document.querySelectorAll('#statsDay .efill').forEach(b=>b.style.width=b.dataset.pct+'%'),80);
+}
+
+// ══════════════════════════════════════════════
+// RENDER HELPERS
+// ══════════════════════════════════════════════
+function renderTimeline(){
+  const strip=$('tstrip'); if(!strip)return;
+  strip.innerHTML='';
+  const now=new Date();
+  for(let d=6;d>=0;d--){
+    const day=new Date(now);day.setDate(now.getDate()-d);
+    const ds=day.toDateString();
+    const di=iactions.filter(x=>new Date(x.ts).toDateString()===ds);
+    const count=di.length;
+    const h=count===0?4:Math.min(52,10+count*10);
+    let col='var(--border)';
+    if(count>0){const ec={};di.forEach(x=>{ec[x.emotion]=(ec[x.emotion]||0)+1;});const top=Object.keys(ec).sort((a,b)=>ec[b]-ec[a])[0];col=ECOL[top]||'var(--accent)';}
+    const lbl=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][day.getDay()===0?6:day.getDay()-1];
+    const w=document.createElement('div');w.className='tbw';
+    w.innerHTML=`<div class="tbar" style="height:${h}px;background:${col};opacity:${count>0?.85:.2}"></div><div class="tday">${lbl}</div>`;
+    w.title=`${lbl}: ${count} interaction${count!==1?'s':''}`;
+    w.onclick=()=>showToast(`${lbl}: ${count} interaction${count!==1?'s':''}`);
+    strip.appendChild(w);
+  }
+}
+
+function renderEbars(targetId='ebars'){
+  const el=$(targetId); if(!el)return;
+  el.innerHTML='';
+  if(!iactions.length){el.innerHTML='<div class="empty"><div class="ei">📊</div><div class="et">No data yet</div><div class="es">Log interactions to see your breakdown</div></div>';return;}
+  const cnt={};iactions.forEach(i=>{cnt[i.emotion]=(cnt[i.emotion]||0)+1;});
+  const total=iactions.length;
+  Object.entries(cnt).sort((a,b)=>b[1]-a[1]).forEach(([emo,c])=>{
+    const pct=Math.round(c/total*100), m=EMO[emo]||{e:'💭',cls:'joy'};
+    const r=document.createElement('div');r.className='erow';
+    r.innerHTML=`<span class="eemo">${m.e}</span><span class="ename">${emo}</span><div class="etrack"><div class="efill ${m.cls}" data-pct="${pct}"></div></div><span class="epct">${pct}%</span>`;
+    el.appendChild(r);
+  });
+  setTimeout(()=>el.querySelectorAll('.efill').forEach(b=>b.style.width=b.dataset.pct+'%'),80);
+}
+
+function renderActivity(){
+  const el=$('alist'); if(!el)return;
+  el.innerHTML='';
+  if(!iactions.length){el.innerHTML='<div class="empty"><div class="ei">🌱</div><div class="et">Nothing yet</div><div class="es">Activity appears here as you log interactions</div></div>';return;}
+  [...iactions].sort((a,b)=>b.ts-a.ts).slice(0,8).forEach(i=>{
+    const m=EMO[i.emotion]||{e:'💭',d:'dp'};
+    const r=document.createElement('div');r.className='ait';
+    r.innerHTML=`<div class="adot ${m.d}"></div><div class="abdy"><div class="atx">Logged <strong>${esc(i.emotion)}</strong> with ${esc(pName(i.personId))}</div><div class="atm">${relTime(i.ts)}${i.note?' · "'+esc(i.note)+'"':''}</div></div><div class="aemo">${m.e}</div>`;
+    el.appendChild(r);
+  });
+}
+
+function renderPeopleList(targetId, limit=Infinity){
+  const el=$(targetId); if(!el)return;
+  el.innerHTML='';
+  if(!people.length){el.innerHTML='<div class="empty"><div class="ei">👥</div><div class="et">No people yet</div><div class="es">Add someone to get started</div></div>';return;}
+  [...people].sort((a,b)=>{
+    const la=iactions.filter(i=>i.personId===a.id).pop();
+    const lb=iactions.filter(i=>i.personId===b.id).pop();
+    return(lb?lb.ts:b.ts)-(la?la.ts:a.ts);
+  }).slice(0,limit).forEach(p=>{
+    const last=iactions.filter(i=>i.personId===p.id).pop();
+    const emoji=last?(EMO[last.emotion]?.e||'💭'):'💭';
+    const r=document.createElement('div');r.className='prow';
+    r.innerHTML=`
+      <div class="pav" style="background:${p.color}">${initials(p.name)}</div>
+      <div class="pinfo"><div class="pname">${esc(p.name)}</div><div class="pmeta">${esc(p.rel)}</div></div>
+      <div class="pemo">${emoji}</div>
+      <div class="p-acts">
+        <button class="rbtn ed" onclick="openEditP('${p.id}',event)" title="Edit">✏️</button>
+        <button class="rbtn dl" onclick="confirmDelP('${p.id}',event)" title="Delete">✕</button>
+      </div>`;
+    r.onclick=e=>{if(!e.target.closest('.p-acts'))openDetail(p.id);};
+    el.appendChild(r);
+  });
+}
+
+function renderFullHistory(targetId){
+  const el=$(targetId); if(!el)return;
+  el.innerHTML='';
+  if(!iactions.length){el.innerHTML='<div class="hemp">No interactions logged yet.</div>';return;}
+  [...iactions].sort((a,b)=>b.ts-a.ts).forEach(item=>{
+    const m=EMO[item.emotion]||{e:'💭'};
+    const r=document.createElement('div');r.className='hit';
+    r.innerHTML=`
+      <div style="font-size:18px;flex-shrink:0;margin-top:1px">${m.e}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px">${esc(item.emotion)} — with ${esc(pName(item.personId))}</div>
+        <div style="font-size:11px;color:var(--muted);font-family:'Syne',sans-serif;">${relTime(item.ts)}${item.note?' · "'+esc(item.note)+'"':''}</div>
+      </div>
+      <div style="display:flex;gap:4px;flex-shrink:0;">
+        <button class="rbtn ed" onclick="openEditI('${item.id}')" title="Edit">✏️</button>
+        <button class="rbtn dl" onclick="confirmDelI('${item.id}')" title="Delete">✕</button>
+      </div>`;
+    el.appendChild(r);
+  });
+}
+
+// rHistory for modal
+function rHistory(){
+  const el=$('hlist'); if(!el)return;
+  el.innerHTML='';
+  if(!iactions.length){el.innerHTML='<div class="hemp">No interactions logged yet.</div>';return;}
+  [...iactions].sort((a,b)=>b.ts-a.ts).forEach(item=>{
+    const m=EMO[item.emotion]||{e:'💭'};
+    const r=document.createElement('div');r.className='hit';
+    r.innerHTML=`
+      <div style="font-size:18px;flex-shrink:0;margin-top:1px">${m.e}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px">${esc(item.emotion)} — with ${esc(pName(item.personId))}</div>
+        <div style="font-size:11px;color:var(--muted);font-family:'Syne',sans-serif;">${relTime(item.ts)}${item.note?' · "'+esc(item.note)+'"':''}</div>
+      </div>
+      <div style="display:flex;gap:4px;flex-shrink:0;">
+        <button class="rbtn ed" onclick="openEditI('${item.id}')" title="Edit">✏️</button>
+        <button class="rbtn dl" onclick="confirmDelI('${item.id}')" title="Delete">✕</button>
+      </div>`;
+    el.appendChild(r);
+  });
+}
+
+function renderAll(){
+  updateSidebarCounts();
+  renderView();
+}
+
+// ══════════════════════════════════════════════
+// PERSON DETAIL
+// ══════════════════════════════════════════════
+function openDetail(id){
+  const p=people.find(x=>x.id===id); if(!p)return;
+  const ints=iactions.filter(i=>i.personId===id);
+  const el=$('detailBody');
+  el.innerHTML=`
+    <div class="pd-hdr">
+      <div class="pd-av" style="background:${p.color}">${initials(p.name)}</div>
+      <div style="flex:1"><div class="pd-name">${esc(p.name)}</div><div class="pd-rel">${esc(p.rel)}</div></div>
+      <div style="display:flex;gap:6px;">
+        <button class="rbtn ed" style="width:30px;height:30px;opacity:1" onclick="openEditP('${p.id}',event)">✏️</button>
+        <button class="rbtn dl" style="width:30px;height:30px;opacity:1" onclick="confirmDelP('${p.id}',event)">✕</button>
+      </div>
+    </div>
+    <div class="slbl">Interactions (${ints.length})</div>
+    <div class="intlist" id="detInts"></div>`;
+  const list=$('detInts');
+  if(!ints.length){list.innerHTML='<div class="empty" style="padding:14px 0"><div class="ei">💭</div><div class="et">No interactions yet</div></div>';}
+  else{
+    [...ints].sort((a,b)=>b.ts-a.ts).forEach(i=>{
+      const m=EMO[i.emotion]||{e:'💭'};
+      const r=document.createElement('div');r.className='iit';
+      r.innerHTML=`<div style="font-size:17px;flex-shrink:0">${m.e}</div><div class="iit-body"><div class="iit-top"><span class="iit-emo">${esc(i.emotion)}</span><span class="iit-time">${relTime(i.ts)}</span></div>${i.note?`<div class="iit-note">"${esc(i.note)}"</div>`:''}</div><div class="iit-acts"><button class="rbtn ed" onclick="openEditI('${i.id}')">✏️</button><button class="rbtn dl" onclick="confirmDelI('${i.id}')">✕</button></div>`;
+      list.appendChild(r);
+    });
+  }
+  $('mDetail').classList.add('on');
+}
+
+// ══════════════════════════════════════════════
+// EDIT PERSON
+// ══════════════════════════════════════════════
+function openEditP(id,e){
+  if(e)e.stopPropagation();
+  const p=people.find(x=>x.id===id); if(!p)return;
+  editPId=id;
+  $('mPTitle').textContent='Edit Person';
+  $('mPSub').textContent='Update details for '+p.name;
+  $('pName').value=p.name;
+  $('pRel').value=p.rel;
+  document.querySelectorAll('#pEpick .chip').forEach(c=>c.classList.remove('sel'));
+  $('btnP').disabled=false;
+  $('btnP').textContent='Save Changes';
+  $('mPerson').classList.add('on');
+}
+
+// ══════════════════════════════════════════════
+// EDIT INTERACTION
+// ══════════════════════════════════════════════
+function openEditI(id){
+  const item=iactions.find(x=>x.id===id); if(!item)return;
+  editIId=id;
+  const sel=$('iPerson');
+  sel.innerHTML='<option value="">— Select —</option>';
+  people.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.name;sel.appendChild(o);});
+  sel.value=item.personId;
+  $('iNote').value=item.note||'';
+  document.querySelectorAll('#iEpick .chip').forEach(c=>c.classList.toggle('sel',c.dataset.v===item.emotion));
+  $('mITitle').textContent='Edit Interaction';
+  $('mISub').textContent='Update this logged moment';
+  $('btnI').disabled=false;
+  $('btnI').textContent='Save Changes';
+  document.querySelectorAll('.mo.on').forEach(m=>m.classList.remove('on'));
+  $('mInter').classList.add('on');
+}
+
+// ══════════════════════════════════════════════
+// SAVE PERSON
+// ══════════════════════════════════════════════
+function saveP(){
+  const name=$('pName').value.trim(), rel2=$('pRel').value.trim();
+  if(!name||!rel2)return;
+  if(editPId){
+    const p=people.find(x=>x.id===editPId);
+    p.name=name; p.rel=rel2;
+    lsS(KP,people);
+    if($('mDetail').classList.contains('on'))openDetail(editPId);
+    closeM('mPerson'); resetPM(); renderAll(); showToast(`✅ ${name} updated!`);
+  } else {
+    const id='p'+Date.now();
+    people.push({id,name,rel:rel2,color:avc(people.length),ts:Date.now()});
+    lsS(KP,people);
+    const chip=document.querySelector('#pEpick .chip.sel');
+    if(chip){iactions.push({id:'i'+Date.now(),personId:id,emotion:chip.dataset.v,note:'',ts:Date.now()});lsS(KI,iactions);}
+    closeM('mPerson'); resetPM(); renderAll(); showToast(`✅ ${name} added!`);
+  }
+}
+
+// ══════════════════════════════════════════════
+// SAVE INTERACTION
+// ══════════════════════════════════════════════
+function saveI(){
+  const pid=$('iPerson').value, note=$('iNote').value.trim(), chip=document.querySelector('#iEpick .chip.sel');
+  if(!pid||!note||!chip)return;
+  if(editIId){
+    const item=iactions.find(x=>x.id===editIId);
+    item.personId=pid; item.emotion=chip.dataset.v; item.note=note;
+    lsS(KI,iactions);
+    if($('mHistory').classList.contains('on'))rHistory();
+    closeM('mInter'); resetIM(); renderAll(); showToast('✅ Interaction updated!');
+  } else {
+    iactions.push({id:'i'+Date.now(),personId:pid,emotion:chip.dataset.v,note,ts:Date.now()});
+    lsS(KI,iactions);
+    closeM('mInter'); resetIM(); renderAll(); showToast('✅ Interaction logged!');
+  }
+}
+
+// ══════════════════════════════════════════════
+// DELETE
+// ══════════════════════════════════════════════
+function confirmDelP(id,e){
+  if(e)e.stopPropagation();
+  const p=people.find(x=>x.id===id); if(!p)return;
+  const cnt=iactions.filter(i=>i.personId===id).length;
+  showConfirm('🗑️',`Remove ${p.name}?`,`Also deletes ${cnt} linked interaction${cnt!==1?'s':''}. Cannot be undone.`,'Remove',()=>{
+    people=people.filter(x=>x.id!==id);
+    iactions=iactions.filter(x=>x.personId!==id);
+    lsS(KP,people); lsS(KI,iactions);
+    $('mDetail').classList.remove('on');
+    renderAll(); showToast(`🗑️ ${p.name} removed`);
+  });
+}
+
+function confirmDelI(id){
+  const item=iactions.find(x=>x.id===id); if(!item)return;
+  const m=EMO[item.emotion]||{e:'💭'};
+  const savedPid=item.personId;
+  showConfirm('🗑️','Delete interaction?',`${m.e} ${item.emotion} with ${pName(savedPid)}. Cannot be undone.`,'Delete',()=>{
+    iactions=iactions.filter(x=>x.id!==id); lsS(KI,iactions);
+    if($('mHistory').classList.contains('on'))rHistory();
+    if($('mDetail').classList.contains('on'))openDetail(savedPid);
+    renderAll(); showToast('🗑️ Interaction deleted');
+  });
+}
+
+// ══════════════════════════════════════════════
+// CONFIRM ENGINE
+// ══════════════════════════════════════════════
+let _cb=null;
+function showConfirm(ico,ttl,sb,okLbl,cb){
+  _cb=cb;
+  $('cIco').textContent=ico; $('cTtl').textContent=ttl; $('cSb').textContent=sb; $('cOk').textContent=okLbl;
+  document.querySelectorAll('.mo.on').forEach(m=>m.style.pointerEvents='none');
+  $('covEl').classList.add('on');
+}
+function closeConfirm(){
+  $('covEl').classList.remove('on');
+  document.querySelectorAll('.mo').forEach(m=>m.style.pointerEvents='');
+  _cb=null;
+}
+function doConfirm(){const cb=_cb; closeConfirm(); if(cb)cb();}
+$('covEl').addEventListener('click',e=>{if(e.target===e.currentTarget)closeConfirm();});
+
+// ══════════════════════════════════════════════
+// MODAL HELPERS
+// ══════════════════════════════════════════════
+function openM(t){
+  if(t==='interaction'){
+    if(!people.length){showToast('⚠️ Add a person first!');openM('person');return;}
+    if(!editIId){
+      const s=$('iPerson');s.innerHTML='<option value="">— Select —</option>';
+      people.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.name;s.appendChild(o);});
+    }
+  }
+  if(t==='history')rHistory();
+  const map={person:'mPerson',interaction:'mInter',history:'mHistory'};
+  $(map[t])?.classList.add('on');
+}
+function closeM(id){
+  $(id)?.classList.remove('on');
+  if(id==='mPerson')resetPM();
+  if(id==='mInter')resetIM();
+}
+document.querySelectorAll('.mo').forEach(o=>o.addEventListener('click',e=>{
+  if(e.target===o){o.classList.remove('on');if(o.id==='mPerson')resetPM();if(o.id==='mInter')resetIM();}
+}));
+
+function resetPM(){editPId=null;$('mPTitle').textContent='Add Person';$('mPSub').textContent='Start tracking someone new';$('pName').value='';$('pRel').value='';document.querySelectorAll('#pEpick .chip').forEach(c=>c.classList.remove('sel'));$('btnP').disabled=true;$('btnP').textContent='Save Person';}
+function resetIM(){editIId=null;$('mITitle').textContent='Log Interaction';$('mISub').textContent='Record a moment with someone';$('iNote').value='';$('iPerson').value='';document.querySelectorAll('#iEpick .chip').forEach(c=>c.classList.remove('sel'));$('btnI').disabled=true;$('btnI').textContent='Log Interaction';}
+function selC(el,pid){document.getElementById(pid).querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');}
+function valP(){$('btnP').disabled=!$('pName').value.trim()||!$('pRel').value.trim();}
+function valI(){$('btnI').disabled=!$('iPerson').value||!$('iNote').value.trim()||!document.querySelector('#iEpick .chip.sel');}
+
+// ══════════════════════════════════════════════
+// LOGOUT
+// ══════════════════════════════════════════════
+function doLogout(){
+  localStorage.removeItem('lm_session');
+  sessionStorage.setItem('just_logged_out','1');
+  window.location.href='auth.html';
+}
+
+// ══════════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════════
+let _tt;
+function showToast(msg){
+  const el=$('toastEl'); el.textContent=msg; el.classList.add('on');
+  clearTimeout(_tt); _tt=setTimeout(()=>el.classList.remove('on'),3000);
+}
+
+// ══════════════════════════════════════════════
+// BOOT
+// ══════════════════════════════════════════════
+initSidebar();
+renderView();
+</script>
+</body>
+</html>
